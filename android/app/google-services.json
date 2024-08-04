@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "799130131030",
+    "project_id": "my-notes-project-saggy",
+    "storage_bucket": "my-notes-project-saggy.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799130131030:android:689ed13863f9a70fa639f7",
+        "android_client_info": {
+          "package_name": "com.example.notes_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjvQTtQqZ5tFt3A71js6PJycHyOhKuLAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
