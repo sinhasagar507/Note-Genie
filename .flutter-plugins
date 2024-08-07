@@ -1,9 +1,0 @@
-# This is a generated file; do not edit or check into version control.
-cloud_firestore=/Users/saggysimmba/.pub-cache/hosted/pub.dev/cloud_firestore-4.17.5/
-cloud_firestore_web=/Users/saggysimmba/.pub-cache/hosted/pub.dev/cloud_firestore_web-3.12.5/
-firebase_analytics=/Users/saggysimmba/.pub-cache/hosted/pub.dev/firebase_analytics-10.10.7/
-firebase_analytics_web=/Users/saggysimmba/.pub-cache/hosted/pub.dev/firebase_analytics_web-0.5.7+7/
-firebase_auth=/Users/saggysimmba/.pub-cache/hosted/pub.dev/firebase_auth-4.20.0/
-firebase_auth_web=/Users/saggysimmba/.pub-cache/hosted/pub.dev/firebase_auth_web-5.12.0/
-firebase_core=/Users/saggysimmba/.pub-cache/hosted/pub.dev/firebase_core-2.32.0/
-firebase_core_web=/Users/saggysimmba/.pub-cache/hosted/pub.dev/firebase_core_web-2.17.2/
