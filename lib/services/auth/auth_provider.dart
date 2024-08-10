@@ -2,7 +2,6 @@
 // It includes methods for creating a user, sending email verification, logging in, and logging out.
 // Any class that implements AuthProvider will need to provide concrete implementations for these methods.
 
-import "package:firebase_core/firebase_core.dart";
 import "package:notes_app/services/auth/auth_user.dart";
 
 /// An abstract class that defines the contract for authentication providers.

@@ -12,7 +12,7 @@ class AuthUser {
   /// A constant constructor that initializes the [isEmailVerified] field.
   /// The `const` keyword indicates that instances of this class can be
   /// compile-time constants if all their fields are compile-time constants.
-  const AuthUser(this.isEmailVerified);
+  const AuthUser({required this.isEmailVerified});
 
   /// A factory constructor that creates an instance of [AuthUser] from a
   /// Firebase [User] object. This is useful for converting Firebase user
@@ -20,6 +20,6 @@ class AuthUser {
   factory AuthUser.fromFirebase(User user) {
     // Create and return an AuthUser instance using the email verification
     // status from the Firebase [User] object.
-    return AuthUser(user.emailVerified);
+    return AuthUser(isEmailVerified: user.emailVerified);
   }
 }

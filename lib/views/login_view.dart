@@ -1,8 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:notes_app/constants/routes.dart';
 import 'package:notes_app/services/auth/auth_exception.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
-// import 'dart:developer' as logging show log;
 
 import 'package:notes_app/utilities/error_dialog.dart';
 
@@ -66,10 +66,12 @@ class _LoginViewState extends State<LoginView> {
               final password = _password.text.trim();
 
               try {
-                AuthService.firebase().login(email: email, password: password);
+                AuthService.firebase().login(email: email, password: password); // Agr user exist hi nai krta, then login nai krega 
 
-                final user = AuthService.firebase().currentUser;
-                if(user?.isEmailVerified ?? false) {
+                final user = FirebaseAuth.instance.currentUser;
+                print(user?.emailVerified); 
+
+                if(user?.emailVerified ?? false) {
                   // logging.log("User is verified");
                   Navigator.of(context).pushNamedAndRemoveUntil(notes, (route) => false);
 
