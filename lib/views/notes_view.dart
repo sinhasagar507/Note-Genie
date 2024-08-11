@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:notes_app/constants/routes.dart';
+import 'package:notes_app/enums/menu_action.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
 import 'package:notes_app/utilities/alert_dialog.dart';
 import 'dart:developer' as logging show log;
-
-enum MenuOptions { logout }
 
 class NotesView extends StatefulWidget {
   const NotesView({super.key});

@@ -5,6 +5,7 @@ import 'package:notes_app/services/auth/auth_exception.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
 
 import 'package:notes_app/utilities/error_dialog.dart';
+import 'dart:developer' as logging show log;
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -66,16 +67,16 @@ class _LoginViewState extends State<LoginView> {
               final password = _password.text.trim();
 
               try {
-                AuthService.firebase().login(email: email, password: password); // Agr user exist hi nai krta, then login nai krega 
+                await AuthService.firebase().login(email: email, password: password); // Agr user exist hi nai krta, then login nai krega 
 
                 final user = FirebaseAuth.instance.currentUser;
-                print(user?.emailVerified); 
 
                 if(user?.emailVerified ?? false) {
-                  // logging.log("User is verified");
+                  logging.log("User is verified");
                   Navigator.of(context).pushNamedAndRemoveUntil(notes, (route) => false);
 
                 } else {
+                  logging.log("Main kahan hui yaar"); 
                   Navigator.of(context).pushNamedAndRemoveUntil(emailVerification, (route) => false);
                 }
 

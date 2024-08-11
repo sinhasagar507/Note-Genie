@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth, FirebaseAut
 import 'auth_user.dart'; 
 import 'auth_provider.dart'; 
 import 'auth_exception.dart'; 
-
+import 'dart:developer' as logging show log;
 class FirebaseAuthProvider implements AuthProvider {
 
   @override
@@ -10,9 +10,14 @@ class FirebaseAuthProvider implements AuthProvider {
   AuthUser? get currentUser {
     // Get the current user from FirebaseAuth
     final user = FirebaseAuth.instance.currentUser;
-    // If the user is not null, return an AuthUser object
-    if (user != null) {
+    if(user != null){
+      logging.log(user.email.toString()); // Remove this as its not a good practice 
+      logging.log("User hai but credentials nai dikh rha"); 
       return AuthUser.fromFirebase(user);
+    }
+    // If the user is not null, return an AuthUser object
+    else{
+      logging.log("No user is currently logged in"); 
     }
     // If the user is null, return null
     return null;
@@ -86,6 +91,7 @@ class FirebaseAuthProvider implements AuthProvider {
                     throw GenericAuthException();
                 }
     } catch (_) {
+      print("Nothng found"); 
       throw GenericAuthException();
    }
   }
