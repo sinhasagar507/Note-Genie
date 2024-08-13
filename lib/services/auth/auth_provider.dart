@@ -20,6 +20,8 @@ abstract class AuthProvider {
   /// - email: The email address of the new user.
   /// - password: The password for the new user.
   
+  Future<void> initialize(); 
+
   Future<AuthUser> createUser({
     required String email,
     required String password,

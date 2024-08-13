@@ -37,13 +37,10 @@ void main() async{
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
-  late final Future<FirebaseApp> _initialization = 
-      Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: _initialization, // Initialize Firebase;
+        future: AuthService.firebase().initialize(), // Initialize Firebase;
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
