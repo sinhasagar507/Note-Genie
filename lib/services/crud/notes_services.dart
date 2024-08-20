@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -37,6 +39,24 @@ const createNoteTable = '''CREATE TABLE "notes" (
 class NotesService {
   Database? _db;
 
+  // Let's define a variable called _notes which consists of all the lists from a particular user
+  List<DataBaseNote> _notes = [];
+
+  // Here I am defining a StreamController of the type <List<DataBaseNote>> which I can broadcast
+  final _noteStreamController =
+      StreamController<List<DataBaseNote>>.broadcast();
+  //
+  Future<void> _cacheNotes() async {
+    // Here I am fetching all the notes
+    final allNotes = await getAllNotes();
+
+    // Then I am converting all the notes to a list
+    _notes = allNotes.toList();
+
+    // I am adding those notes to a Stream Controller, so that they can be viewed asynchronously
+    _noteStreamController.add(_notes);
+  }
+
   // This function serves as a check to determine whether the database can be accessed for particular reading and writing operations
   Database _getDataBaseOrThrow() {
     final db = _db;
@@ -49,6 +69,23 @@ class NotesService {
     // Else I will return the database
     else {
       return db;
+    }
+  }
+
+  // Now I want something for getOrCreate Users thing as well
+  Future<DataBaseUser> getOrCreateUser({required String email}) async {
+    try {
+      final user = await getUser(
+          email:
+              email); // Now I am awaiting to see if the user still exists in the database
+      return user;
+    } on CouldNotFindUser {
+      final createdUser = await createUser(
+          email: email); // If I don't find the user, the user will be created
+      return createdUser;
+    } catch (e) {
+      // Okay, so there might be some other Exceptions as well which I haven't taken care of
+      rethrow; // So I kinda just rethrow the exception again back to the caller and from there it will be shown
     }
   }
 
@@ -103,6 +140,7 @@ class NotesService {
     return DataBaseUser.fromRow(results.first);
   }
 
+  // Delete the users from the database
   Future<void> deleteUser({required String email}) async {
     // Again I am fetching the instance of database user
     final db = _getDataBaseOrThrow();
@@ -114,19 +152,24 @@ class NotesService {
       whereArgs: [email.toLowerCase()],
     );
 
-    // If the deleted count is not atleast 1, then no such user exists
+    // If the deleted count is not at least 1, then no such user exists
     if (deletedCount != 1) {
       throw CouldNotDeleteNote();
     }
   }
 
 // This particular function deletes all notes from a particular database
-  Future<int> deleteNotes() async {
+  Future<int> deleteAllNotes() async {
     // Again I am fetching the instance of database user
     final db = _getDataBaseOrThrow();
 
     // Try deleting the user from the database
-    return await db.delete(noteTable);
+    final noOfDeletions = await db.delete(
+        noteTable); // First of all, I would wait for all notes to be deleted normally
+    _notes = []; // Then I would set the private variable _notes to null
+    _noteStreamController.add(
+        _notes); // And I would finally add it to the _notesStreamController. The user-facing StreamController of the class is also updated with the latest information. StreamController is user-facing, so I need to update it
+    return noOfDeletions; // Then I return the no. of deletions
   }
 
   // The following function is used to update all notes
@@ -151,7 +194,19 @@ class NotesService {
       throw CouldNotUpdateNote();
     } else {
       // Else I return an instance of getNote function to return the updated note
-      return await getNote(id: note.id);
+      final updatedNote = await getNote(id: note.id);
+
+      // Now I will modify the local existing cache
+      // Remove the older note
+      _notes.removeWhere((note) => note.id == updatedNote.id);
+
+      // Add the updated note
+      _notes.add(updatedNote);
+
+      // Finally update the StreamBuilder as well
+      _noteStreamController.add(_notes);
+
+      return updatedNote;
     }
   }
 
@@ -164,7 +219,7 @@ class NotesService {
     return await db.delete(userTable);
   }
 
-  // This particular function gets notes from the database
+  // This particular function gets a particular note from the database
   Future<DataBaseNote> getNote({required int id}) async {
     final db = _getDataBaseOrThrow();
 
@@ -178,12 +233,20 @@ class NotesService {
     if (notes.isEmpty) {
       throw CouldNotFindNote();
     } else {
-      return DataBaseNote.fromRow(notes.first);
+      final note = DataBaseNote.fromRow(notes.first);
+      // What if _notes got updated? It would be a huge problem if I don't update the _notes locally
+      // Hence I have removed the earlier version of note
+      _notes.removeWhere((note) => note.id == id);
+      // Now here I have the updated version of note, so I am adding that one
+      _notes.add(note);
+      // I have added the updated cache to the front-facing stream_controller
+      _noteStreamController.add(_notes);
+      return note;
     }
   }
 
 // Write a function to capture all notes
-  Future<Iterable<DataBaseNote>> getAllNotes({required int id}) async {
+  Future<Iterable<DataBaseNote>> getAllNotes() async {
     final db = _getDataBaseOrThrow();
 
     // Here I am creating a functionality to get all notes
@@ -221,6 +284,9 @@ class NotesService {
       // Waiting for the db cursor instance to execute those SQL queries
       await db.execute(createUserTable);
       await db.execute(createNoteTable);
+
+      // Every time a particular user logs into the application, he or she is going to see all of their previous notes hosted there
+      await _cacheNotes();
     }
 
     // No such directory or database path exists
@@ -229,18 +295,18 @@ class NotesService {
     }
   }
 
-// The following function helps us in creating a new note
+  // The following function helps us in creating a new note
   Future<DataBaseNote?> createNote({required DataBaseUser owner}) async {
-// Again fetch the database
+    // Again fetch the database
     final db = _getDataBaseOrThrow();
 
-// Make sure that the user exists in the database with the correct ID
-// I fetch the database user
+    // Make sure that the user exists in the database with the correct ID
+    // I fetch the database user
     final dbUser = await getUser(email: owner.email);
 
-// Now here I am trying to apply the equality operator which I had overridden before
-// Two users with the same email ID don't exist in the database
-// If the database user is not the owner, means I cannot find the user.
+    // Now here I am trying to apply the equality operator which I had overridden before
+    // Two users with the same email ID don't exist in the database
+    // If the database user is not the owner, means I cannot find the user.
     if (dbUser != owner) {
       throw CouldNotFindUser();
     }
@@ -274,6 +340,9 @@ class NotesService {
     // If the deleted count is not atleast 1, then no such user exists
     if (deletedCount != 1) {
       throw CouldNotDeleteNote();
+    } else {
+      _notes.removeWhere((note) => note.id == id);
+      _noteStreamController.add(_notes);
     }
   }
 
