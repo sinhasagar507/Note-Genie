@@ -9,7 +9,7 @@ import 'package:notes_app/views/registration_view.dart';
 import 'package:notes_app/views/verification_view.dart';
 import 'dart:developer' as logging show log;
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

@@ -67,17 +67,21 @@ class _LoginViewState extends State<LoginView> {
               final password = _password.text.trim();
 
               try {
-                await AuthService.firebase().login(email: email, password: password); // Agr user exist hi nai krta, then login nai krega 
+                await AuthService.firebase().login(
+                    email: email,
+                    password:
+                        password); // Agr user exist hi nai krta, then login nai krega
 
                 final user = FirebaseAuth.instance.currentUser;
 
-                if(user?.emailVerified ?? false) {
+                if (user?.emailVerified ?? false) {
                   logging.log("User is verified");
-                  Navigator.of(context).pushNamedAndRemoveUntil(notes, (route) => false);
-
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil(notes, (route) => false);
                 } else {
-                  logging.log("Main kahan hui yaar"); 
-                  Navigator.of(context).pushNamedAndRemoveUntil(emailVerification, (route) => false);
+                  logging.log("Main kahan hui yaar");
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                      emailVerification, (route) => false);
                 }
 
                 // logging.log(
@@ -89,20 +93,13 @@ class _LoginViewState extends State<LoginView> {
                 //   (_) => false,
                 // );
               } on UserNotFoundAuthException {
-                 
-                    await showErrorDialog(
-                        context, "Wrong password provided for that user.");
+                await showErrorDialog(
+                    context, "Wrong password provided for that user.");
+              } on InvalidEmailException {
+                await showErrorDialog(context, "No user found for that email.");
+              } on GenericAuthException {
+                await showErrorDialog(context, "Authentication Error");
               }
-
-              on InvalidEmailException {
-    
-                    await showErrorDialog(
-                        context, "No user found for that email.");
-              }
-
-              on GenericAuthException {
-                    await showErrorDialog(context, "Authentication Error");
-                }
             },
             child: const Text("Login"),
           ),

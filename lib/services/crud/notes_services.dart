@@ -45,7 +45,9 @@ class NotesService {
   // Here I am defining a StreamController of the type <List<DataBaseNote>> which I can broadcast
   final _noteStreamController =
       StreamController<List<DataBaseNote>>.broadcast();
-  //
+
+  Stream<List<DataBaseNote>> get allNotes => _noteStreamController.stream;
+
   Future<void> _cacheNotes() async {
     // Here I am fetching all the notes
     final allNotes = await getAllNotes();
@@ -76,12 +78,13 @@ class NotesService {
   Future<DataBaseUser> getOrCreateUser({required String email}) async {
     try {
       final user = await getUser(
-          email:
-              email); // Now I am awaiting to see if the user still exists in the database
+        email: email,
+      ); // Now I am awaiting to see if the user still exists in the database
       return user;
     } on CouldNotFindUser {
       final createdUser = await createUser(
-          email: email); // If I don't find the user, the user will be created
+        email: email,
+      ); // If I don't find the user, the user will be created
       return createdUser;
     } catch (e) {
       // Okay, so there might be some other Exceptions as well which I haven't taken care of
@@ -92,6 +95,8 @@ class NotesService {
   // In the function below, I am trying to create a new user
   Future<DataBaseUser> createUser({required String email}) async {
     // I am checking if the database is open
+    await _ensureDbIsOpen();
+    // I am checking if there is an instance of database under existence
     final db = _getDataBaseOrThrow();
 
     // If the database is not null or the database is null but no such user exists, results will be 0
@@ -118,12 +123,15 @@ class NotesService {
     return DataBaseUser(id: userId, email: email);
   }
 
-  // This particular user is used to fetch a user from the dataframe
+  // This particular user is used to fetch a user from the database
   Future<DataBaseUser> getUser({required String email}) async {
-    // Here I am fetching the database
+    // First fetch the database
+    await _ensureDbIsOpen();
+
+    // Then throw the required Dart Exception
     final db = _getDataBaseOrThrow();
 
-    // For the results parameter, I am querying the parametet to check if the user exists
+    // For the results parameter, I am querying the parameter to check if the user exists
     final results = await db.query(
       userTable,
       limit: 1,
@@ -142,6 +150,8 @@ class NotesService {
 
   // Delete the users from the database
   Future<void> deleteUser({required String email}) async {
+    // Ensure that the database is first open
+    await _ensureDbIsOpen(); // If I don't perform this operation, the second operation will always return a null
     // Again I am fetching the instance of database user
     final db = _getDataBaseOrThrow();
 
@@ -160,7 +170,9 @@ class NotesService {
 
 // This particular function deletes all notes from a particular database
   Future<int> deleteAllNotes() async {
-    // Again I am fetching the instance of database user
+    // First of all, I make sure that the database is open
+    await _ensureDbIsOpen();
+    // Then I am making sure that the data is initialized
     final db = _getDataBaseOrThrow();
 
     // Try deleting the user from the database
@@ -177,6 +189,8 @@ class NotesService {
     required DataBaseNote note,
     required String text,
   }) async {
+    // First I have to make sure that the database is even open
+    await _ensureDbIsOpen();
     final db = _getDataBaseOrThrow();
     await getNote(id: note.id);
 
@@ -212,6 +226,13 @@ class NotesService {
 
   // This particular function deletes all particular users
   Future<int> deleteUsers() async {
+    /*
+    Jbb bhi koi nya user arrives toh pehle check kro if the database open hua hai bhi ki nai
+    Ye check krna is very necessary. Aise hi by default database open krdena is not optimal by design 
+    */
+    // First i have to ensure that the database is even open
+    await _ensureDbIsOpen();
+
     // Again I am fetching the instance of database user
     final db = _getDataBaseOrThrow();
 
@@ -221,6 +242,9 @@ class NotesService {
 
   // This particular function gets a particular note from the database
   Future<DataBaseNote> getNote({required int id}) async {
+    // Ensure first tha the database is open
+    await _ensureDbIsOpen();
+    // Then if doesn't show any
     final db = _getDataBaseOrThrow();
 
     final notes = await db.query(
@@ -247,6 +271,7 @@ class NotesService {
 
 // Write a function to capture all notes
   Future<Iterable<DataBaseNote>> getAllNotes() async {
+    await _ensureDbIsOpen();
     final db = _getDataBaseOrThrow();
 
     // Here I am creating a functionality to get all notes
@@ -297,6 +322,7 @@ class NotesService {
 
   // The following function helps us in creating a new note
   Future<DataBaseNote?> createNote({required DataBaseUser owner}) async {
+    await _ensureDbIsOpen();
     // Again fetch the database
     final db = _getDataBaseOrThrow();
 
@@ -327,6 +353,8 @@ class NotesService {
   }
 
   Future<void> deleteNote({required int id}) async {
+    // First check if the database is open
+    await _ensureDbIsOpen();
     // So I am trying to implement deleting that particular note
     final db = _getDataBaseOrThrow();
 
@@ -357,6 +385,16 @@ class NotesService {
       // else closes the connection and sets the database instance to null
       await db.close();
       _db = null;
+    }
+  }
+
+  // I just don't have to check if a particular database instance exists
+  // Its also necessary that the database is also open. And for that, I need to add this check as well to ensure that the database is indeed open
+  Future<void> _ensureDbIsOpen() async {
+    try {
+      await open();
+    } on DatabaseAlreadyOpenException {
+      // empty
     }
   }
 }
