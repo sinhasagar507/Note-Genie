@@ -42,6 +42,20 @@ class NotesService {
   // Let's define a variable called _notes which consists of all the lists from a particular user
   List<DataBaseNote> _notes = [];
 
+  // Recreate the notesService as a Singleton
+  // Creating a private named constructor
+  /*
+  Here I have created a singleton just because I don't want to create a copy of the NotesService() class 
+  each time it is called. It is just not conventional/standard practice/non-optimal
+   */
+  NotesService._sharedInstance();
+
+  // I am assigning it to a variable
+  static final NotesService _shared = NotesService._sharedInstance();
+
+  // Now I will assign it to a factory constructor so that it can be shared outside of the class
+  factory NotesService() => _shared;
+
   // Here I am defining a StreamController of the type <List<DataBaseNote>> which I can broadcast
   final _noteStreamController =
       StreamController<List<DataBaseNote>>.broadcast();

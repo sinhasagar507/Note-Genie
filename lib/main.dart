@@ -4,7 +4,8 @@ import 'package:notes_app/constants/routes.dart';
 import 'package:notes_app/firebase_options.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
 import 'package:notes_app/views/login_view.dart';
-import 'package:notes_app/views/notes_view.dart';
+import 'package:notes_app/views/notes/new_note_view.dart';
+import 'package:notes_app/views/notes/notes_view.dart';
 import 'package:notes_app/views/registration_view.dart';
 import 'package:notes_app/views/verification_view.dart';
 import 'dart:developer' as logging show log;
@@ -29,6 +30,7 @@ void main() async {
         login: (context) => const LoginView(),
         notes: (context) => const NotesView(),
         emailVerification: (context) => const VerificationView(),
+        newNote: (context) => const NewNoteView(),
       },
     ),
   );

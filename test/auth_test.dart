@@ -5,41 +5,49 @@ import 'package:notes_app/services/auth/auth_user.dart';
 
 void main() {
   group('Mock Authentication', () {
-    final provider = MockAuthProvider(); 
-    
+    final provider = MockAuthProvider();
+
     /** 
     Test if the user is initialized
     Now here I have assumed that the mock auth provider shouldn't be initialized to begin with 
     Hence I expect the value to be false 
     **/
     test('Should not be initialized to begin with', () {
-      expect(provider.isInitialized, false); 
-    }); 
+      expect(provider.isInitialized, false);
+    });
 
-    // Test if the user can be logged out 
-    test('Cannot logout if not initialized', () {
-      expect(
-        provider.logout(), // the auth service provider will logout the user 
-        /*
+    // Test if the user can be logged out
+    test(
+      'Cannot logout if not initialized',
+      () {
+        expect(
+            provider.logout(), // the auth service provider will logout the user
+            /*
         A function that throws an exception when called. The function cannot take any arguments,
         and id the function has arguments, I need to wrap the function with arguments in the original function 
         which contains the test 
         */
-        throwsA(const TypeMatcher<NotInitializedException>()) // this will be executed if no user is initialized 
-      ); 
-    },);
+            throwsA(const TypeMatcher<
+                NotInitializedException>()) // this will be executed if no user is initialized
+            );
+      },
+    );
 
     // Test if the user can be initialized in a particular time frame
-    // I am calling the provider.initialize() of the mock auth provider and I want to test in how much time frame my value is returned exactly 
-    // If the initialization isn't happened in less than 2 seconds, the test will fail 
-    test('Should be able to initialize in less than 2 secs', () async{
-      await provider.initialize(); 
-      expect(provider.isInitialized, true); 
-    }, 
-    timeout: const Timeout(Duration(seconds: 2),),
-    ); 
+    // I am calling the provider.initialize() of the mock auth provider and I want to test in how much time frame my value is returned exactly
+    // If the initialization isn't happened in less than 2 seconds, the test will fail
+    test(
+      'Should be able to initialize in less than 2 secs',
+      () async {
+        await provider.initialize();
+        expect(provider.isInitialized, true);
+      },
+      timeout: const Timeout(
+        Duration(seconds: 2),
+      ),
+    );
 
-    // Test creating a user 
+    // Test creating a user
     // Now there will be some particular users
     test('Create user should delegate to login function', () async {
       /*
@@ -48,54 +56,63 @@ void main() {
       to throw and exception if I pass in those IDs 
       */
 
-      final badEmailUser = provider.createUser(email: 'foo@bar.com', password: 'foobar',); 
-      expect(badEmailUser, throwsA(const TypeMatcher<UserNotFoundAuthException>())); 
+      final badEmailUser = provider.createUser(
+        email: 'foo@bar.com',
+        password: 'foobar',
+      );
+      expect(badEmailUser,
+          throwsA(const TypeMatcher<UserNotFoundAuthException>()));
 
-      final badPasswordUser = provider.createUser(email: 'someone@bar.com', password: 'foobar',); 
-      expect(badPasswordUser, throwsA(const TypeMatcher<WrongPasswordAuthException>())); 
+      final badPasswordUser = provider.createUser(
+        email: 'someone@bar.com',
+        password: 'foobar',
+      );
+      expect(badPasswordUser,
+          throwsA(const TypeMatcher<WrongPasswordAuthException>()));
 
-      final user = await provider.createUser(email: 
-      'foo', password: 'bar',); 
+      final user = await provider.createUser(
+        email: 'foo',
+        password: 'bar',
+      );
 
-      expect(provider.currentUser, user); 
-      expect(user.isEmailVerified, false); // I expect the user's email 
+      expect(provider.currentUser, user);
+      expect(user.isEmailVerified, false); // I expect the user's email
     });
 
-    // Test email verification 
-    test("Logged in user should be able to get verified", (){
-      provider.sendEmailVerification(); 
+    // Test email verification
+    test("Logged in user should be able to get verified", () {
+      provider.sendEmailVerification();
       // Now I want to test that the provider doesn't return a null user
-      final user = provider.currentUser; 
-      expect(user, isNotNull); 
-
+      final user = provider.currentUser;
+      expect(user, isNotNull);
 
       /*
       Now, since the user is logged in, I also want to test that the user is logged in, I am setting it to verified. 
 
       */
-      expect(user!.isEmailVerified, true); 
+      expect(user!.isEmailVerified, true);
+    });
 
-    }); 
-
-
-    // In the next test, the user should be able to logout and login again 
-    test('User should be able to logout and login again', () async{
-      await provider.logout(); 
-      await provider.login(email: 'email', password: 'password',); 
-      final user = provider.currentUser; 
-      expect(user, isNotNull); 
-    }); 
-  }); 
+    // In the next test, the user should be able to logout and login again
+    test('User should be able to logout and login again', () async {
+      await provider.logout();
+      await provider.login(
+        email: 'email',
+        password: 'password',
+      );
+      final user = provider.currentUser;
+      expect(user, isNotNull);
+    });
+  });
 }
 
 class NotInitializedException implements Exception {}
 
-class MockAuthProvider implements AuthProvider
-{
-  AuthUser? _user; 
+class MockAuthProvider implements AuthProvider {
+  AuthUser? _user;
   var _isInitialized = false;
 
-  // Here I am creating a getter function such that I can access the value of the variable outside its limited scope through this function  
+  // Here I am creating a getter function such that I can access the value of the variable outside its limited scope through this function
   bool get isInitialized => _isInitialized;
 
   @override
@@ -169,18 +186,22 @@ class MockAuthProvider implements AuthProvider
    * user creation and authentication.
    */
   @override
-  Future<AuthUser> createUser({required String email, required String password}) async
-  {
-    if(!isInitialized) throw NotInitializedException(); 
-    await Future.delayed(const Duration(seconds: 1),); 
-    return login(email: email, password: password);
+  Future<AuthUser> createUser(
+      {required String email, required String password}) async {
+    if (!isInitialized) throw NotInitializedException();
+    await Future.delayed(
+      const Duration(seconds: 1),
+    );
+    return login(
+      email: email,
+      password: password,
+    );
   }
 
-    
   @override
   AuthUser? get currentUser => _user;
-  
-   /**
+
+  /**
    * This method is an override of the `initialize` method from the `AuthProvider` interface or superclass.
    * It simulates the initialization process of the authentication service within the mock provider.
    *
@@ -216,16 +237,17 @@ class MockAuthProvider implements AuthProvider
    * the provider is ready for use. This ensures that tests involving this mock provider can accurately reflect 
    * scenarios where the initialization process is necessary and potentially time-consuming.
    */
-  Future<void> initialize() async{
+  Future<void> initialize() async {
     // The initialization method simulates the setup or initialization of the authentication service.
     // This could represent establishing a connection to an authentication server or loading necessary resources.
-    await Future.delayed(const Duration(seconds: 1)); // Introduce an artificial 1-second delay to simulate a time-consuming initialization process.
-    
+    await Future.delayed(const Duration(
+        seconds:
+            1)); // Introduce an artificial 1-second delay to simulate a time-consuming initialization process.
+
     // After the delay, the `_isInitialized` flag is set to `true`, indicating that the mock provider is now ready for use.
-    _isInitialized = true; 
+    _isInitialized = true;
   }
 
-    
   /**
    * This method is an override of the `login` method from the `AuthProvider` interface or superclass.
    * It simulates the login process for a user in the context of a mock authentication provider.
@@ -290,15 +312,19 @@ class MockAuthProvider implements AuthProvider
    */
   @override
   Future<AuthUser> login({required String email, required String password}) {
-    if (!isInitialized) throw NotInitializedException(); // Check if the provider is initialized, otherwise throw an exception
-    if (email == 'foo@bar.com') throw UserNotFoundAuthException(); // Simulate user not found error
-    if (password == 'foobar') throw WrongPasswordAuthException(); // Simulate wrong password error
-    const user = AuthUser(isEmailVerified: false); // Create a new user with email verification set to false
+    if (!isInitialized)
+      throw NotInitializedException(); // Check if the provider is initialized, otherwise throw an exception
+    if (email == 'foo@bar.com')
+      throw UserNotFoundAuthException(); // Simulate user not found error
+    if (password == 'foobar')
+      throw WrongPasswordAuthException(); // Simulate wrong password error
+    const user = AuthUser(
+      email: 'foo@bar.com',
+      isEmailVerified: false,
+    ); // Create a new user with email verification set to false
     _user = user; // Update the current user to this newly created user
     return Future.value(user); // Return the user wrapped in a Future
   }
-
-
 
   /*
   Finally, the user who is already logged in also needs to be logged out
@@ -306,22 +332,27 @@ class MockAuthProvider implements AuthProvider
   real-world scenarios and then I set the value of current user to null 
   */
   @override
-  Future<void> logout() async{
-  if (!isInitialized) throw NotInitializedException();
-  if(_user == null) throw UserNotFoundAuthException(); 
-  await Future.delayed(const Duration(seconds: 1),); 
-  _user = null; 
+  Future<void> logout() async {
+    if (!isInitialized) throw NotInitializedException();
+    if (_user == null) throw UserNotFoundAuthException();
+    await Future.delayed(
+      const Duration(seconds: 1),
+    );
+    _user = null;
   }
-    
-  // Here I would try to mock email verification 
+
+  // Here I would try to mock email verification
 
   @override
   Future<void> sendEmailVerification() async {
     // TODO: implement send EmailVerification
-    if (!isInitialized) throw NotInitializedException(); 
-    if(_user == null) throw UserNotFoundAuthException(); 
-    final newUser = AuthUser(isEmailVerified: true); 
-    // I will introduce an artificial delay since the backend is checking for user verification 
+    if (!isInitialized) throw NotInitializedException();
+    if (_user == null) throw UserNotFoundAuthException();
+    final newUser = AuthUser(
+      email: 'foo@bar.com',
+      isEmailVerified: true,
+    );
+    // I will introduce an artificial delay since the backend is checking for user verification
     _user = newUser;
-    }
+  }
 }
