@@ -112,7 +112,6 @@ class _NotesViewState extends State<NotesView> {
                   switch (snapshot.connectionState) {
                     // Here I fixed a broken logic
                     case ConnectionState.waiting:
-                    case ConnectionState.active:
                       return const Text("All your notes will stream here...");
                     // Here I am actually trying to run a StreamBuilder where
                     default:

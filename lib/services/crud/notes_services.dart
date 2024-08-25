@@ -489,7 +489,7 @@ class DataBaseNote {
   // The 'covariant' keyword allows the 'other' parameter to be of a more specific type than the original 'Object' type.
   // This ensures that the comparison is type-safe and specific to DataBaseNote instances.
   @override
-  bool operator == (covariant DataBaseNote other) => id == other.id;
+  bool operator ==(covariant DataBaseNote other) => id == other.id;
 
   // Overriding the hashCode getter to return the hash code of the 'id' field.
   // This ensures that DataBaseNote objects with the same 'id' have the same hash code, which is crucial for using instances
