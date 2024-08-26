@@ -48,19 +48,26 @@ class NotesService {
   Here I have created a singleton just because I don't want to create a copy of the NotesService() class 
   each time it is called. It is just not conventional/standard practice/non-optimal
    */
-  NotesService._sharedInstance();
 
-  // I am assigning it to a variable
   static final NotesService _shared = NotesService._sharedInstance();
 
-  // Now I will assign it to a factory constructor so that it can be shared outside of the class
+  /// Here I am defining a StreamController of the type <List<DataBaseNote>> which I can broadcast
+
+  late final StreamController<List<DataBaseNote>> _notesStreamController;
+
+  Stream<List<DataBaseNote>> get allNotes => _notesStreamController.stream;
+
+  // I am assigning it to a variable
+  NotesService._sharedInstance() {
+    _notesStreamController = StreamController<List<DataBaseNote>>.broadcast(
+      onListen: () {
+        _notesStreamController.sink.add(_notes);
+      },
+    );
+  }
+
+  /// Now I will assign it to a factory constructor so that it can be shared outside of the class
   factory NotesService() => _shared;
-
-  // Here I am defining a StreamController of the type <List<DataBaseNote>> which I can broadcast
-  final _noteStreamController =
-      StreamController<List<DataBaseNote>>.broadcast();
-
-  Stream<List<DataBaseNote>> get allNotes => _noteStreamController.stream;
 
   Future<void> _cacheNotes() async {
     // Here I am fetching all the notes
@@ -70,7 +77,7 @@ class NotesService {
     _notes = allNotes.toList();
 
     // I am adding those notes to a Stream Controller, so that they can be viewed asynchronously
-    _noteStreamController.add(_notes);
+    _notesStreamController.add(_notes);
   }
 
   // This function serves as a check to determine whether the database can be accessed for particular reading and writing operations
@@ -193,7 +200,7 @@ class NotesService {
     final noOfDeletions = await db.delete(
         noteTable); // First of all, I would wait for all notes to be deleted normally
     _notes = []; // Then I would set the private variable _notes to null
-    _noteStreamController.add(
+    _notesStreamController.add(
         _notes); // And I would finally add it to the _notesStreamController. The user-facing StreamController of the class is also updated with the latest information. StreamController is user-facing, so I need to update it
     return noOfDeletions; // Then I return the no. of deletions
   }
@@ -232,7 +239,7 @@ class NotesService {
       _notes.add(updatedNote);
 
       // Finally update the StreamBuilder as well
-      _noteStreamController.add(_notes);
+      _notesStreamController.add(_notes);
 
       return updatedNote;
     }
@@ -278,7 +285,7 @@ class NotesService {
       // Now here I have the updated version of note, so I am adding that one
       _notes.add(note);
       // I have added the updated cache to the front-facing stream_controller
-      _noteStreamController.add(_notes);
+      _notesStreamController.add(_notes);
       return note;
     }
   }
@@ -384,7 +391,7 @@ class NotesService {
       throw CouldNotDeleteNote();
     } else {
       _notes.removeWhere((note) => note.id == id);
-      _noteStreamController.add(_notes);
+      _notesStreamController.add(_notes);
     }
   }
 

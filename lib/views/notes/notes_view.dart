@@ -26,11 +26,11 @@ class _NotesViewState extends State<NotesView> {
     _notesService = NotesService();
   }
 
-  @override
-  void dispose() {
-    _notesService.close();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _notesService.close();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +53,7 @@ class _NotesViewState extends State<NotesView> {
                   final dialogVal = await showAlertDialog(context);
                   logging.log(dialogVal.toString());
                   // Okay if I have logged out, I should navigate to the login page
-                  // Depending upon the dialogVall, decide to log out the user from Firebase
+                  // Depending upon the dialogValue, decide to log out the user from Firebase
                   if (dialogVal) {
                     AuthService.firebase().logout();
                     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -95,6 +95,28 @@ class _NotesViewState extends State<NotesView> {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
               return StreamBuilder(
+                stream: _notesService.allNotes,
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.waiting:
+                    case ConnectionState.active:
+                      if (snapshot.hasData) {
+                        final allNotes = snapshot.data as List<DataBaseNote>;
+                        print(allNotes);
+                        return const Text("Got all the notes");
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
+
+                    default:
+                      return const CircularProgressIndicator();
+                  }
+                },
+              );
+
+            case ConnectionState.waiting:
+            case ConnectionState.done:
+              return StreamBuilder(
                 /*
                 Purpose - StreamBuilder is used when one needs to work with a Stream, which represents a sequence of 
                 asynchronous events over time. it rebuilds its widget tree every time a new event is emitted by
@@ -111,7 +133,7 @@ class _NotesViewState extends State<NotesView> {
                 builder: (context, snapshot) {
                   switch (snapshot.connectionState) {
                     // Here I fixed a broken logic
-                    case ConnectionState.waiting:
+                    case ConnectionState.active:
                       return const Text("All your notes will stream here...");
                     // Here I am actually trying to run a StreamBuilder where
                     default:
