@@ -25,3 +25,6 @@ class CouldNotFindNote implements Exception {}
 
 // This is a class which asks to implement if the note can be updated or not
 class CouldNotUpdateNote implements Exception {}
+
+// User should be set before reading all notes
+class UserShouldBeSetBeforeReadingAllNotes implements Exception {}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:notes_app/constants/routes.dart';
 import 'package:notes_app/enums/menu_action.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
-import 'package:notes_app/services/crud/notes_services.dart';
+import 'package:notes_app/services/crud/notes_service.dart';
 import 'package:notes_app/utilities/dialogs/logout_dialog.dart';
 import 'dart:developer' as logging show log;
 

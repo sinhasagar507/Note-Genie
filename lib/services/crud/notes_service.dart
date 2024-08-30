@@ -1,6 +1,6 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:notes_app/extensions/lists/filter.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
@@ -39,6 +39,7 @@ class NotesService {
 
   // Let's define a variable called _notes which consists of all the lists from a particular user
   List<DataBaseNote> _notes = [];
+  DataBaseUser? _user;
 
   // Recreate the notesService as a Singleton
   // Creating a private named constructor
@@ -65,7 +66,17 @@ class NotesService {
 
   late final StreamController<List<DataBaseNote>> _notesStreamController;
 
-  Stream<List<DataBaseNote>> get allNotes => _notesStreamController.stream;
+  Stream<List<DataBaseNote>> get allNotes =>
+      _notesStreamController.stream.filter((
+        note,
+      ) {
+        final currentUser = _user;
+        if (currentUser != null) {
+          return note.user_id == currentUser.id;
+        } else {
+          throw UserShouldBeSetBeforeReadingAllNotes();
+        }
+      });
 
   Future<void> _cacheNotes() async {
     // Here I am fetching all the notes
@@ -94,16 +105,27 @@ class NotesService {
   }
 
   // Now I want something for getOrCreate Users thing as well
-  Future<DataBaseUser> getOrCreateUser({required String email}) async {
+  Future<DataBaseUser> getOrCreateUser({
+    required String email,
+    bool setAsCurrentUser = true,
+  }) async {
     try {
       final user = await getUser(
         email: email,
       ); // Now I am awaiting to see if the user still exists in the database
+      if (setAsCurrentUser) {
+        // If the parameter is true, set the database user instance as the current user
+        _user = user;
+      }
       return user;
     } on CouldNotFindUser {
       final createdUser = await createUser(
         email: email,
       ); // If I don't find the user, the user will be created
+      if (setAsCurrentUser) {
+        // If user can't be retrieved, set the current user to setAsCurrentUser
+        _user = createdUser;
+      }
       return createdUser;
     } catch (e) {
       // Okay, so there might be some other Exceptions as well which I haven't taken care of
@@ -219,6 +241,8 @@ class NotesService {
       {
         textColumn: text,
       },
+      where: 'id=?',
+      whereArgs: [note.id],
     );
 
     // If the updateCount is 0, then CouldNotUpdateNote() is returned

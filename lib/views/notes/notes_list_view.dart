@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:notes_app/services/crud/notes_services.dart';
+import 'package:notes_app/services/crud/notes_service.dart';
 import 'package:notes_app/utilities/dialogs/delete_dialog.dart';
 
 // Defining a callback placeholder
