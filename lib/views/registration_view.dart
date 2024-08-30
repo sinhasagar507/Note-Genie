@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:notes_app/constants/routes.dart';
 import 'package:notes_app/services/auth/auth_exception.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
-import 'package:notes_app/utilities/error_dialog.dart';
+import 'package:notes_app/utilities/dialogs/error_dialog.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -64,19 +64,20 @@ class _RegisterViewState extends State<RegisterView> {
               final password = _password.text.trim();
               try {
                 // final userCredential =
-                AuthService.firebase().createUser(email: email, password: password); 
+                AuthService.firebase()
+                    .createUser(email: email, password: password);
                 AuthService.firebase().sendEmailVerification();
-                Navigator.of(context).pushNamed(emailVerification); 
+                Navigator.of(context).pushNamed(emailVerification);
                 // logging.log(
                 //     userCredential.toString()); // Log the user registration
               } on WeakPasswordAuthException {
-                  await showErrorDialog(context, "Weak password");
+                await showErrorDialog(context, "Weak password");
               } on EmailAlreadyInUseAuthException {
-                  await showErrorDialog(context, "Email already in use");
+                await showErrorDialog(context, "Email already in use");
               } on InvalidEmailException {
-                  await showErrorDialog(context, "Invalid email");
+                await showErrorDialog(context, "Invalid email");
               } on GenericAuthException {
-                  await showErrorDialog(context, "Authentication Error");
+                await showErrorDialog(context, "Authentication Error");
               }
             },
             child: const Text("Register"),

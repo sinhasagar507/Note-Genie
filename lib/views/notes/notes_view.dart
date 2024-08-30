@@ -3,8 +3,10 @@ import 'package:notes_app/constants/routes.dart';
 import 'package:notes_app/enums/menu_action.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
 import 'package:notes_app/services/crud/notes_services.dart';
-import 'package:notes_app/utilities/alert_dialog.dart';
+import 'package:notes_app/utilities/dialogs/logout_dialog.dart';
 import 'dart:developer' as logging show log;
+
+import 'package:notes_app/views/notes/notes_list_view.dart';
 
 class NotesView extends StatefulWidget {
   const NotesView({super.key});
@@ -25,6 +27,8 @@ class _NotesViewState extends State<NotesView> {
     super.initState();
     _notesService = NotesService();
   }
+
+  // I am currently disposing
 
   // @override
   // void dispose() {
@@ -50,7 +54,7 @@ class _NotesViewState extends State<NotesView> {
             onSelected: (value) async {
               switch (value) {
                 case MenuOptions.logout:
-                  final dialogVal = await showAlertDialog(context);
+                  final dialogVal = await showLogOutDialog(context);
                   logging.log(dialogVal.toString());
                   // Okay if I have logged out, I should navigate to the login page
                   // Depending upon the dialogValue, decide to log out the user from Firebase
@@ -93,31 +97,9 @@ class _NotesViewState extends State<NotesView> {
         ),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              return StreamBuilder(
-                stream: _notesService.allNotes,
-                builder: (context, snapshot) {
-                  switch (snapshot.connectionState) {
-                    case ConnectionState.waiting:
-                    case ConnectionState.active:
-                      if (snapshot.hasData) {
-                        final allNotes = snapshot.data as List<DataBaseNote>;
-                        print(allNotes);
-                        return const Text("Got all the notes");
-                      } else {
-                        return const CircularProgressIndicator();
-                      }
-
-                    default:
-                      return const CircularProgressIndicator();
-                  }
-                },
-              );
-
             case ConnectionState.waiting:
             case ConnectionState.done:
-              return StreamBuilder(
-                /*
+              /*
                 Purpose - StreamBuilder is used when one needs to work with a Stream, which represents a sequence of 
                 asynchronous events over time. it rebuilds its widget tree every time a new event is emitted by
                 the "stream". 
@@ -129,20 +111,32 @@ class _NotesViewState extends State<NotesView> {
                 it suitable for continuous data streams where you want the UI to reflect each piece of data as it arrives. 
 
                 */
+              return StreamBuilder(
                 stream: _notesService.allNotes,
                 builder: (context, snapshot) {
                   switch (snapshot.connectionState) {
-                    // Here I fixed a broken logic
                     case ConnectionState.active:
-                      return const Text("All your notes will stream here...");
-                    // Here I am actually trying to run a StreamBuilder where
+                      if (snapshot.hasData) {
+                        final allNotes = snapshot.data as List<DataBaseNote>;
+                        return NotesListView(
+                          notes: allNotes,
+                          onDeleteNote: (note) async {
+                            await _notesService.deleteNote(
+                              id: note.id,
+                            );
+                          },
+                        );
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
+
                     default:
-                      return CircularProgressIndicator();
+                      return const CircularProgressIndicator();
                   }
                 },
               );
             default:
-              return CircularProgressIndicator();
+              return const CircularProgressIndicator();
           }
         },
       ),

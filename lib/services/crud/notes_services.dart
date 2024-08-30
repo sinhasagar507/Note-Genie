@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
-import 'package:meta/meta.dart';
 import 'package:notes_app/services/crud/crud_exceptions.dart';
 
 // Constants to represent the column names in a database.
@@ -13,26 +12,25 @@ const idColumn = 'id';
 const emailColumn = 'email';
 const userIdColumn = 'user_id';
 const textColumn = 'text';
-const IsSyncedWithCloudColumn = 'isSyncedWithCloud';
+// const isSyncedWithCloudColumn = 'isSyncedWithCloud';
 const dbName = 'notes.db';
-const noteTable = 'note';
-const userTable = 'user';
+const noteTable = 'notes';
+const userTable = 'users';
 
 // The following SQL queries are used for creating our tables inside the database called 'notes.db'.
-const createUserTable = '''CREATE TABLE "user" (
+const createUserTable = '''CREATE TABLE IF NOT EXISTS "users" (
           "id"	INTEGER NOT NULL,
-          "email "	TEXT NOT NULL UNIQUE,
+          "email"	TEXT NOT NULL UNIQUE,
           PRIMARY KEY("id" AUTOINCREMENT)
       );''';
 
 // The following SQL query creates a note table and defines its associated attributes
-const createNoteTable = '''CREATE TABLE "notes" (
-          "id"	INTEGER NOT NULL,
+const createNoteTable = '''CREATE TABLE IF NOT EXISTS "notes" (
+          "id" INTEGER NOT NULL,
           "user_id"	INTEGER NOT NULL,
-          "text"	TEXT,
-          "is_synced_with_cloud"	INTEGER NOT NULL DEFAULT 0,
+          "text" TEXT,
           PRIMARY KEY("id" AUTOINCREMENT),
-          FOREIGN KEY("user_id") REFERENCES "user"("id")
+          FOREIGN KEY("user_id") REFERENCES "users"("id")
       );''';
 
 /// Here I am creating a NotesService class, which implements the full-fledged capability of reading and performing manipulations on the database
@@ -49,16 +47,10 @@ class NotesService {
   each time it is called. It is just not conventional/standard practice/non-optimal
    */
 
-  static final NotesService _shared = NotesService._sharedInstance();
-
-  /// Here I am defining a StreamController of the type <List<DataBaseNote>> which I can broadcast
-
-  late final StreamController<List<DataBaseNote>> _notesStreamController;
-
-  Stream<List<DataBaseNote>> get allNotes => _notesStreamController.stream;
-
   // I am assigning it to a variable
+  static final NotesService _shared = NotesService._sharedInstance();
   NotesService._sharedInstance() {
+    /// Here I am defining a StreamController of the type <List<DataBaseNote>> which I can broadcast
     _notesStreamController = StreamController<List<DataBaseNote>>.broadcast(
       onListen: () {
         _notesStreamController.sink.add(_notes);
@@ -66,8 +58,14 @@ class NotesService {
     );
   }
 
+  // Anyone who has subscribed to the NotesStreamController will
+
   /// Now I will assign it to a factory constructor so that it can be shared outside of the class
   factory NotesService() => _shared;
+
+  late final StreamController<List<DataBaseNote>> _notesStreamController;
+
+  Stream<List<DataBaseNote>> get allNotes => _notesStreamController.stream;
 
   Future<void> _cacheNotes() async {
     // Here I am fetching all the notes
@@ -124,7 +122,7 @@ class NotesService {
     final results = await db.query(
       userTable, // Here userTable is being passed as the primary parameter to the 'db.query' function
       limit: 1, // The limit is set to 1
-      where: 'email = ?', // Here the where clause of SQL is executed
+      where: 'email=?', // Here the where clause of SQL is executed
       whereArgs: [
         email.toLowerCase()
       ], // Here the email parameter is converted to lowercase and passed as a parameter which is searched
@@ -179,7 +177,7 @@ class NotesService {
     // Try deleting the user from database
     final deletedCount = await db.delete(
       userTable,
-      where: 'email = ?',
+      where: 'email=?',
       whereArgs: [email.toLowerCase()],
     );
 
@@ -220,7 +218,6 @@ class NotesService {
       noteTable,
       {
         textColumn: text,
-        IsSyncedWithCloudColumn: 0,
       },
     );
 
@@ -271,7 +268,7 @@ class NotesService {
     final notes = await db.query(
       noteTable,
       limit: 1,
-      where: 'id = ?',
+      where: 'id=?',
       whereArgs: [id],
     );
 
@@ -325,6 +322,14 @@ class NotesService {
     */
 
       final db = await openDatabase(dbPath);
+
+      // Check if Database exists
+      bool exists = await databaseExists(dbPath);
+      if (exists) {
+        print('Database exists at $dbPath');
+      } else {
+        print('Database does not exist at $dbPath');
+      }
       _db = db;
 
       // Waiting for the db cursor instance to execute those SQL queries
@@ -363,13 +368,16 @@ class NotesService {
 // Using the createNote SQL query to fetch the noteID
     final noteId = await db.insert(noteTable, {
       userIdColumn: owner.id,
-      text: text,
-      IsSyncedWithCloudColumn: 1,
+      textColumn: text,
     });
 
 // Here I created an instance of database note and then return the note with the appropriate parameters
     final note = DataBaseNote(
-        id: noteId, user_id: owner.id, text: text, isSyncedWithCloud: true);
+      id: noteId,
+      user_id: owner.id,
+      text: text,
+      // isSyncedWithCloud: true,
+    );
     return note;
   }
 
@@ -382,11 +390,11 @@ class NotesService {
     // Try deleting the user from database
     final deletedCount = await db.delete(
       noteTable,
-      where: 'id = ?',
+      where: 'id=?',
       whereArgs: [id],
     );
 
-    // If the deleted count is not atleast 1, then no such user exists
+    // If the deleted count is not at least 1, then no such user exists
     if (deletedCount != 1) {
       throw CouldNotDeleteNote();
     } else {
@@ -416,6 +424,7 @@ class NotesService {
       await open();
     } on DatabaseAlreadyOpenException {
       // empty
+      // Nothing to print
     }
   }
 }
@@ -464,7 +473,7 @@ class DataBaseNote {
   final int id;
   final int user_id;
   final String text;
-  final bool isSyncedWithCloud;
+  // final bool isSyncedWithCloud;
 
   // A constant constructor that initializes the id and email fields.
   // The 'const' keyword ensures that this constructor can be used to create compile-time constants.
@@ -472,7 +481,7 @@ class DataBaseNote {
     required this.id,
     required this.user_id,
     required this.text,
-    required this.isSyncedWithCloud,
+    // required this.isSyncedWithCloud,
   });
 
   // A named constructor that initializes a DataBaseUser instance from a Map.
@@ -482,15 +491,14 @@ class DataBaseNote {
   DataBaseNote.fromRow(Map<String, Object?> map)
       : id = map[idColumn] as int,
         user_id = map[userIdColumn] as int,
-        text = map[textColumn] as String,
-        isSyncedWithCloud =
-            (map[IsSyncedWithCloudColumn] as int) == 1 ? true : false;
+        text = map[textColumn] as String;
+  // isSyncedWithCloud =
+  //     (map[isSyncedWithCloudColumn] as int) == 1 ? true : false;
 
   // Overriding the toString method to provide a custom string representation of the DataBaseUser object.
   // This is useful for debugging or logging, as it gives a clear, human-readable format of the object's data.
   @override
-  String toString() =>
-      'Note, ID: {$id}, user: {$user_id}, cloudSynced: {$isSyncedWithCloud}, text: {$text}';
+  String toString() => 'Note, ID: {$id}, user: {$user_id}, text: {$text}';
 
   // Overriding the '==' operator to compare two DataBaseNote objects based on their IDs.
   // The 'covariant' keyword allows the 'other' parameter to be of a more specific type than the original 'Object' type.
