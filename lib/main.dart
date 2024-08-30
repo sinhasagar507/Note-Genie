@@ -4,7 +4,8 @@ import 'package:notes_app/constants/routes.dart';
 import 'package:notes_app/firebase_options.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
 import 'package:notes_app/views/login_view.dart';
-import 'package:notes_app/views/notes/new_note_view.dart';
+import 'package:notes_app/views/notes/create_update_note_view.dart';
+import 'package:notes_app/views/notes/create_update_note_view.dart';
 import 'package:notes_app/views/notes/notes_view.dart';
 import 'package:notes_app/views/registration_view.dart';
 import 'package:notes_app/views/verification_view.dart';
@@ -33,7 +34,7 @@ void main() async {
         login: (context) => const LoginView(),
         notes: (context) => const NotesView(),
         emailVerification: (context) => const VerificationView(),
-        newNote: (context) => const NewNoteView(),
+        createUpdateNote: (context) => const CreateUpdateNoteView(),
       },
     ),
   );
@@ -45,28 +46,29 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: AuthService.firebase().initialize(), // Initialize Firebase;
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              final user = AuthService.firebase().currentUser;
-              if (user != null) {
-                if (user.isEmailVerified) {
-                  logging.log("User is verified");
-                } else {
-                  return const VerificationView();
-                }
+      future: AuthService.firebase().initialize(), // Initialize Firebase;
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.done:
+            final user = AuthService.firebase().currentUser;
+            if (user != null) {
+              if (user.isEmailVerified) {
+                logging.log("User is verified");
               } else {
-                return const LoginView();
+                return const VerificationView();
               }
-              return const NotesView();
-            default:
-              return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-          }
-        });
+            } else {
+              return const LoginView();
+            }
+            return const NotesView();
+          default:
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+        }
+      },
+    );
   }
 }
