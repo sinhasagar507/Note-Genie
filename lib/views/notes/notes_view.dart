@@ -125,6 +125,12 @@ class _NotesViewState extends State<NotesView> {
                               id: note.id,
                             );
                           },
+                          onTap: (note) {
+                            Navigator.of(context).pushNamed(
+                              createUpdateNote,
+                              arguments: note,
+                            );
+                          },
                         );
                       } else {
                         return const CircularProgressIndicator();

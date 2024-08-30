@@ -3,18 +3,20 @@ import 'package:notes_app/services/crud/notes_services.dart';
 import 'package:notes_app/utilities/dialogs/delete_dialog.dart';
 
 // Defining a callback placeholder
-typedef DeleteNoteCallback = void Function(DataBaseNote note);
+typedef NoteCallback = void Function(DataBaseNote note);
 
 class NotesListView extends StatelessWidget {
   final List<DataBaseNote> notes;
 
   // The callback function
-  final DeleteNoteCallback onDeleteNote;
+  final NoteCallback onDeleteNote;
+  final NoteCallback onTap;
 
   const NotesListView({
     super.key,
     required this.notes,
     required this.onDeleteNote,
+    required this.onTap,
   });
 
   @override
@@ -33,6 +35,9 @@ class NotesListView extends StatelessWidget {
             softWrap: true,
             overflow: TextOverflow.ellipsis,
           ),
+          onTap: () async {
+            onTap(note);
+          },
           trailing: IconButton(
             onPressed: () async {
               final shouldDelete = await showDeleteDialog(context);

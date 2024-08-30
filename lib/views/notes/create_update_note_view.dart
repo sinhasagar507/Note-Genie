@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
 import 'package:notes_app/services/crud/notes_services.dart';
+import 'package:notes_app/utilities/generics/get_arguments.dart';
 
 class CreateUpdateNoteView extends StatefulWidget {
   const CreateUpdateNoteView({super.key});
@@ -22,8 +23,16 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     _textController = TextEditingController();
   }
 
-  Future<DataBaseNote> createNewNote() async {
+  Future<DataBaseNote> createOrGetExistingNote(BuildContext context) async {
     final existingNote = _note;
+    final widgetNote = context.getArgument<DataBaseNote>();
+
+    // Check if there exists an argument for updating the note
+    if (widgetNote != null) {
+      _note = widgetNote;
+      _textController.text = widgetNote.text;
+      return widgetNote;
+    }
 
     if (existingNote != null) {
       return existingNote;
@@ -33,7 +42,9 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
         .currentUser!; // App should definitely crash if I am able to reach up till this point without notifying the user
     final email = currentUser.email!; // the email should definitely be there
     final owner = await _notesService.getUser(email: email);
-    return await _notesService.createNote(owner: owner);
+    final newNote = await _notesService.createNote(owner: owner);
+    _note = newNote;
+    return newNote;
   }
 
   void _deleteNoteIfTextIsEmpty() {
@@ -96,11 +107,11 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
         title: const Text('New Note'),
       ),
       body: FutureBuilder(
-        future: createNewNote(),
+        future: createOrGetExistingNote(context),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
-              _note = snapshot.data as DataBaseNote?;
+              // _note = snapshot.data; Its not a good idea that a core variable is being changed this way (it should be handled in the note view itself)
               _setUpTextControllerListener(); // I have setup the TextController because at this point I really want to start listening to the main UI
               return TextField(
                 controller: _textController,
