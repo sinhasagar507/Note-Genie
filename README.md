@@ -1,4 +1,4 @@
-# notes_app
+# Note_Genie
 
 A new Flutter project.
 
