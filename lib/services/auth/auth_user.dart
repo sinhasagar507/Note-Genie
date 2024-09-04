@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 /// Once an instance of this class is created, its fields cannot be changed.
 @immutable
 class AuthUser {
+  final String id;
+
   /// A final field that holds the email verification status of the user.
   /// Since it's final, it can only be set once and cannot be modified.
   final String?
@@ -18,6 +20,7 @@ class AuthUser {
   // So up till this point I wasn't able to fetch all notes for a particular user through his/her's email address
   // So I need to make modifications to the code over here and add email as one of the required parameters
   const AuthUser({
+    required this.id,
     required this.email,
     required this.isEmailVerified,
   });
@@ -30,6 +33,7 @@ class AuthUser {
     // status from the Firebase [User] object.
     // THe user is an optional instance of
     return AuthUser(
+      id: user.uid,
       email: user.email,
       isEmailVerified: user.emailVerified,
     );

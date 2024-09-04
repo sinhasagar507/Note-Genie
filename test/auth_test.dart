@@ -319,6 +319,7 @@ class MockAuthProvider implements AuthProvider {
     if (password == 'foobar')
       throw WrongPasswordAuthException(); // Simulate wrong password error
     const user = AuthUser(
+      id: 'saggysimmba',
       email: 'foo@bar.com',
       isEmailVerified: false,
     ); // Create a new user with email verification set to false
@@ -349,6 +350,7 @@ class MockAuthProvider implements AuthProvider {
     if (!isInitialized) throw NotInitializedException();
     if (_user == null) throw UserNotFoundAuthException();
     final newUser = AuthUser(
+      id: 'saggysimmba',
       email: 'foo@bar.com',
       isEmailVerified: true,
     );
