@@ -6,6 +6,24 @@ import 'package:notes_app/services/cloud/cloud_storage_exceptions.dart';
 class FirebaseCloudStorage {
   final notes = FirebaseFirestore.instance.collection('notes');
 
+  Stream<Iterable<CloudNote>> allNotes({
+    required String ownerUserId,
+  }) =>
+      notes.snapshots().map((
+            event,
+          ) =>
+              event.docs
+                  .map((
+                    doc,
+                  ) =>
+                      CloudNote.fromSnapshot(
+                        doc,
+                      ))
+                  .where((
+                    note,
+                  ) =>
+                      note.ownerUserId == ownerUserId));
+
   Future<Iterable> getNotes({required String ownerUserId}) async {
     try {
       return await notes
