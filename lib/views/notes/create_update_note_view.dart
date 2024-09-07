@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
-import 'package:notes_app/services/crud/notes_service.dart';
+import 'package:notes_app/services/cloud/cloud_note.dart';
 import 'package:notes_app/utilities/generics/get_arguments.dart';
+import 'package:notes_app/services/cloud/firebase_cloud_storage.dart';
 
 class CreateUpdateNoteView extends StatefulWidget {
   const CreateUpdateNoteView({super.key});
@@ -11,21 +12,21 @@ class CreateUpdateNoteView extends StatefulWidget {
 }
 
 class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
-  DataBaseNote? _note;
-  late final NotesService _notesService;
+  CloudNote? _note;
+  late final FirebaseCloudStorage _notesService;
   late final TextEditingController _textController;
 
   @override
   void initState() {
     // If I am disposing something, I need to initialize it as well in _initstate() and only then I can do anything
     super.initState();
-    _notesService = NotesService();
+    _notesService = FirebaseCloudStorage();
     _textController = TextEditingController();
   }
 
-  Future<DataBaseNote> createOrGetExistingNote(BuildContext context) async {
+  Future<CloudNote> createOrGetExistingNote(BuildContext context) async {
     final existingNote = _note;
-    final widgetNote = context.getArgument<DataBaseNote>();
+    final widgetNote = context.getArgument<CloudNote>();
 
     // Check if there exists an argument for updating the note
     if (widgetNote != null) {
@@ -40,9 +41,8 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
 
     final currentUser = AuthService.firebase()
         .currentUser!; // App should definitely crash if I am able to reach up till this point without notifying the user
-    final email = currentUser.email!; // the email should definitely be there
-    final owner = await _notesService.getUser(email: email);
-    final newNote = await _notesService.createNote(owner: owner);
+    final userId = currentUser.id; // the email should definitely be there
+    final newNote = await _notesService.createNewNote(ownerUserId: userId);
     _note = newNote;
     return newNote;
   }
@@ -52,7 +52,7 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     if (_textController.text.isEmpty && note != null) {
       // Okay so I have created an instance of new note in the database
       _notesService.deleteNote(
-          id: note.id); // Delete the note with the given ID
+          documentId: note.documentId); // Delete the note with the given ID
     }
   }
 
@@ -61,10 +61,7 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     final text = _textController.text;
 
     if (note != null && text.isNotEmpty) {
-      await _notesService.updateNote(
-        note: note,
-        text: text,
-      );
+      await _notesService.updateNotes(documentId: note.documentId, text: text);
     }
   }
 
@@ -78,10 +75,7 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     }
 
     final text = _textController.text;
-    await _notesService.updateNote(
-      note: note,
-      text: text,
-    );
+    await _notesService.updateNotes(documentId: note.documentId, text: text);
   }
 
   // Hook our textController to the listener for proper updates

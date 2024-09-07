@@ -4,6 +4,12 @@ import 'package:notes_app/services/cloud/cloud_storage_constants.dart';
 import 'package:notes_app/services/cloud/cloud_storage_exceptions.dart';
 
 class FirebaseCloudStorage {
+  // Create a singleton class
+  static final FirebaseCloudStorage _shared =
+      FirebaseCloudStorage._sharedInstance();
+  FirebaseCloudStorage._sharedInstance();
+  factory FirebaseCloudStorage() => _shared;
+
   final notes = FirebaseFirestore.instance.collection('notes');
 
   // The function 'allNotes' returns a stream of iterable collection objects.
@@ -12,22 +18,19 @@ class FirebaseCloudStorage {
         ownerUserId, // The ID of the user whose notes are to be retrieved
   }) =>
       notes.snapshots().map((
-            // Receives a stream of snapshots from the 'notes' collection
-            event, // Each snapshot contains the current state of the notes collection
-          ) =>
-              event.docs // Access the list of documents from the snapshot
-                  .map((
-                    doc, // For each document in the snapshot
-                  ) =>
-                      CloudNote.fromSnapshot(
-                        // Convert the document data into a CloudNote object
-                        doc,
-                      ))
-                  .where((
-                    note, // Filter the CloudNote objects
-                  ) =>
-                      note.ownerUserId ==
-                      ownerUserId)); // Only return notes that belong to the specified ownerUserId
+              // Receives a stream of snapshots from the 'notes' collection
+              event // Each snapshot contains the current state of the notes collection
+              ) =>
+          event.docs // Access the list of documents from the snapshot
+              .map((doc // For each document in the snapshot
+                      ) =>
+                  CloudNote.fromSnapshot(
+                      // Convert the document data into a CloudNote object
+                      doc))
+              .where((note // Filter the CloudNote objects
+                      ) =>
+                  note.ownerUserId ==
+                  ownerUserId)); // Only return notes that belong to the specified ownerUserId
 
   // The following function is used to 'update' a specific note
   Future<void> updateNotes({
@@ -53,43 +56,33 @@ class FirebaseCloudStorage {
     }
   }
 
-  Future<Iterable> getNotes({required String ownerUserId}) async {
+  // The following function 'reads' all notes in the database
+  Future<Iterable<CloudNote>> getNotes({required String ownerUserId}) async {
     try {
       return await notes
-          .where(
-            ownerUserIdFieldName,
-            isEqualTo: ownerUserId,
-          )
+          .where(ownerUserIdFieldName, isEqualTo: ownerUserId)
           .get()
           .then(
-            (
-              value,
-            ) =>
-                value.docs.map(
-              (doc) => CloudNote(
-                documentId: doc.id,
-                ownerUserId: doc.data()[ownerUserIdFieldName] as String,
-                text: doc.data()[textFieldName] as String,
-              ),
-            ),
+            (value) => value.docs.map((doc) => CloudNote.fromSnapshot(doc)),
           );
     } catch (_) {
       throw CouldNotGetAllNotesException;
     }
   }
 
-  void createNewNote({required String ownerUserId}) async {
-    await notes.add(
+  // THe following function 'creates' a new note in the database
+  Future<CloudNote> createNewNote({required String ownerUserId}) async {
+    final document = await notes.add(
       {
         ownerUserIdFieldName: ownerUserId,
         textFieldName: '',
       },
     );
+    final fetchedNote = await document.get();
+    return CloudNote(
+      documentId: fetchedNote.id,
+      ownerUserId: ownerUserId,
+      text: '',
+    );
   }
-
-  // Create a singleton class
-  static final FirebaseCloudStorage _shared =
-      FirebaseCloudStorage._sharedInstance();
-  FirebaseCloudStorage._sharedInstance();
-  factory FirebaseCloudStorage() => _shared;
 }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:notes_app/constants/routes.dart';
 import 'package:notes_app/enums/menu_action.dart';
 import 'package:notes_app/services/auth/auth_service.dart';
-import 'package:notes_app/services/crud/notes_service.dart';
+import 'package:notes_app/services/cloud/cloud_note.dart';
+import 'package:notes_app/services/cloud/firebase_cloud_storage.dart';
 import 'package:notes_app/utilities/dialogs/logout_dialog.dart';
 import 'dart:developer' as logging show log;
 
@@ -17,15 +18,15 @@ class NotesView extends StatefulWidget {
 
 class _NotesViewState extends State<NotesView> {
   // Now I have to connect the backend database service with the UI. Hence I will open my notesService here
-  late final NotesService _notesService;
-  String get userEmail => AuthService.firebase()
+  late final FirebaseCloudStorage _notesService;
+  String get userId => AuthService.firebase()
       .currentUser!
-      .email!; // I am forcing wrapping it to be non-null. Because at this stage, its the only way to authenticate the users
+      .id; // I am forcing wrapping it to be non-null. Because at this stage, its the only way to authenticate the users
 
   @override
   void initState() {
     super.initState();
-    _notesService = NotesService();
+    _notesService = FirebaseCloudStorage();
   }
 
   // I am currently disposing
@@ -80,67 +81,29 @@ class _NotesViewState extends State<NotesView> {
           ),
         ],
       ),
-      body: FutureBuilder(
-        /*
-        Purpose - "FutureBuilder" is used when I need to work with a "Future", which represents a single asynchronous computation that returns a 
-        value once. Once the "Future" completes, the "FutureBuilder" rebuilds its widget tree based on the result 
-
-        Use Case - It is commonly used for tasks like fetching data from a network, loading a file, or any asynchronous operation 
-        that results in a single outcome 
-
-        Rebuilding - The widget tree built by "FutureBuilder" is only rebuilt when the "Future" completes. After the "Future" is resolved, 
-        the builder function does not run again unless the "Future" itself is replaced 
-
-        */
-        future: _notesService.getOrCreateUser(
-          email: userEmail,
-        ),
+      body: StreamBuilder(
+        stream: _notesService.allNotes(ownerUserId: userId),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-            case ConnectionState.done:
-              /*
-                Purpose - StreamBuilder is used when one needs to work with a Stream, which represents a sequence of 
-                asynchronous events over time. it rebuilds its widget tree every time a new event is emitted by
-                the "stream". 
+            case ConnectionState.active:
+              if (snapshot.hasData) {
+                final allNotes = snapshot.data as Iterable<CloudNote>;
+                return NotesListView(
+                  notes: allNotes,
+                  onDeleteNote: (note) async {
+                    await _notesService.deleteNote(documentId: note.documentId);
+                  },
+                  onTap: (note) {
+                    Navigator.of(context).pushNamed(
+                      createUpdateNote,
+                      arguments: note,
+                    );
+                  },
+                );
+              } else {
+                return const CircularProgressIndicator();
+              }
 
-                Use Case - It is ideal for real-time data handling, such as receiving updates from a 
-                Websocket, listening to data changes in a database, or managing periodic updates (eg:, a timer)
-
-                Rebuilding - The widget tree built by "StreamBuilder" is rebuilt every time the "Stream" emits a new value. This makes 
-                it suitable for continuous data streams where you want the UI to reflect each piece of data as it arrives. 
-
-                */
-              return StreamBuilder(
-                stream: _notesService.allNotes,
-                builder: (context, snapshot) {
-                  switch (snapshot.connectionState) {
-                    case ConnectionState.active:
-                      if (snapshot.hasData) {
-                        final allNotes = snapshot.data as List<DataBaseNote>;
-                        return NotesListView(
-                          notes: allNotes,
-                          onDeleteNote: (note) async {
-                            await _notesService.deleteNote(
-                              id: note.id,
-                            );
-                          },
-                          onTap: (note) {
-                            Navigator.of(context).pushNamed(
-                              createUpdateNote,
-                              arguments: note,
-                            );
-                          },
-                        );
-                      } else {
-                        return const CircularProgressIndicator();
-                      }
-
-                    default:
-                      return const CircularProgressIndicator();
-                  }
-                },
-              );
             default:
               return const CircularProgressIndicator();
           }
