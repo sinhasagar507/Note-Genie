@@ -39,35 +39,80 @@ void main() async {
   );
 }
 
-class HomePage extends StatelessWidget {
+// class HomePage extends StatelessWidget {
+//   const HomePage({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return FutureBuilder(
+//       future: AuthService.firebase().initialize(), // Initialize Firebase;
+//       builder: (BuildContext context, AsyncSnapshot snapshot) {
+//         switch (snapshot.connectionState) {
+//           case ConnectionState.done:
+//             final user = AuthService.firebase().currentUser;
+//             if (user != null) {
+//               if (user.isEmailVerified) {
+//                 logging.log("User is verified");
+//               } else {
+//                 return const VerificationView();
+//               }
+//             } else {
+//               return const LoginView();
+//             }
+//             return const NotesView();
+//           default:
+//             return const Scaffold(
+//               body: Center(
+//                 child: CircularProgressIndicator(),
+//               ),
+//             );
+//         }
+//       },
+//     );
+//   }
+// }
+
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: AuthService.firebase().initialize(), // Initialize Firebase;
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.done:
-            final user = AuthService.firebase().currentUser;
-            if (user != null) {
-              if (user.isEmailVerified) {
-                logging.log("User is verified");
-              } else {
-                return const VerificationView();
-              }
-            } else {
-              return const LoginView();
-            }
-            return const NotesView();
-          default:
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-        }
-      },
-    );
+    return Container();
   }
+}
+
+@immutable
+abstract class CounterState {
+  final int value;
+  const CounterState(this.value);
+}
+
+class CounterStateValid extends CounterState {
+  const CounterStateValid(int value) : super(value);
+}
+
+class CounterStateInvalidNumber extends CounterState {
+  final String invalidValue;
+  const CounterStateInvalidNumber(
+      {required this.invalidValue, required int previousValue})
+      : super(previousValue);
+}
+
+@immutable
+abstract class CounterEvent {
+  final String value;
+  const CounterEvent(this.value);
+}
+
+class IncrementEvent extends CounterEvent {
+  const IncrementEvent(super.value);
+}
+
+class DecrementEvent extends CounterEvent {
+  const DecrementEvent(super.value);
 }
